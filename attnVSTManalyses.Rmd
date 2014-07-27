@@ -1,0 +1,1147 @@
+Distinct effects of memory and cue validity on orientation judgments
+===
+
+By Christie Rose Marie Haskell and Britt Anderson
+
+Version 1, 27/07/2014
+
+Source 
+
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+#Load required packages
+library(plyr)
+library(circular)
+library(heplots)
+library(knitr)
+```
+
+```{r,echo=FALSE}
+#Source all custom scripts
+source("C:/Users/Christie/Documents/GitHub/AttentionVSTM/attnVSTMfuncs.R")
+source("C:/Users/Christie/Documents/GitHub/AttentionVSTM/read_data.R")
+```
+
+```{r,echo=FALSE}
+#Define data path for expeirment 1 (path1), experiment 2 (path 2), and experiment 3 (path 3)
+path1<-"C:/Users/Christie/Documents/Research/Projects/AttentionVSTM/Experiments/Experiment 2/data"
+path2<-"C:/Users/Christie/Documents/Research/Projects/AttentionVSTM/Experiments/Experiment 3/data"
+path3<-"C:/Users/Christie/Documents/Research/Projects/AttentionVSTM/Experiments/Experiment 4/data"
+  
+#Read in data for the three experiments
+d1all<-read.data(path1)
+d2all<-read.data(path2)
+d3all<-read.data(path3)
+dall<-rbind(d1all,d2all,d3all)
+
+#Remove practice trials
+d<-subset(dall,dall$practice=="FALSE")
+```
+
+```{r,echo=FALSE}
+#Remove any subjects who rotated the circle in the correct direction at or below chance
+sel1<-prop.cor(d[which(d$Experiment=="2a"),])
+sel2<-prop.cor(d[which(d$Experiment=="3a"),])
+sel3<-prop.cor(d[which(d$Experiment=="4a"),])
+
+rm1<-sel1[which(sel1$prop.cor<=0.5),]$userid
+rm2<-sel2[which(sel2$prop.cor<=0.5),]$userid
+rm3<-sel3[which(sel3$prop.cor<=0.5),]$userid
+
+d1<-d[which(d$Experiment=="2a"),]
+d2<-d[which(d$Experiment=="3a"),]
+d3<-d[which(d$Experiment=="4a"),]
+
+if (length(rm1>0)) {
+  for (i in 1:length(rm1)) {
+    d1<-subset(d1,d1$userid!=rm1[i])
+  }
+}
+if (length(rm2>0)) {
+  for (i in 1:length(rm2)) {
+    d2<-subset(d2,d2$userid!=rm2[i])
+  }
+}
+if (length(rm3>0)) {
+  for (i in 1:length(rm3)) {
+    d3<-subset(d3,d3$userid!=rm3[i])
+  }
+}
+d<-rbind(d1,d2,d3)
+
+#Change datatype to factor for factor variables
+d$blockType<-as.factor(d$blockType)
+d$validCue<-as.factor(d$validCue)
+d$stimResp<-as.factor(d$stimResp)
+d$userid<-as.factor(d$userid)
+```
+
+```{r,echo=FALSE}
+#Invalid trial anomly
+d<-d[!(d$Experiment=="3a" & d$userid==17),]
+d<-d[!(d$Experiment=="3a" & d$userid==7),]
+```
+
+Subject Removal
+---
+
+Criterion: Rotated the grating in the right direction above chance
+
+Removed:
+
+`r length(rm1)` subjects in Experiment 1
+
+`r length(rm2)` subjects in Experiment 2
+         
+`r length(rm3)` subjects in Experiment 3
+
+Two subjects were also removed from Experiment 2 because of random number generation: they were missing invalid trials in one of four experimental blocks.
+
+
+
+Orientation judgments on sequential and simultaneous trials in the absence of a spatial pre-cue
+---
+
+```{r,echo=FALSE}
+#Dataframe of uncued trials only
+dneut<-subset(d,d$validCue=="neutral")
+```
+
+## Descriptive Statistics ##
+
+
+### Bias ###
+```{r,echo=FALSE}
+#Mean bias per cell for each subject in each experiment
+bias.neutBT.user<-ddply(dneut,.(Experiment,userid,blockType),summarise,bias=mean(angdiff))
+bias.neutBT.user1<-bias.neutBT.user[which(bias.neutBT.user$Experiment=="2a"),]
+bias.neutBT.user2<-bias.neutBT.user[which(bias.neutBT.user$Experiment=="3a"),]
+bias.neutBT.user3<-bias.neutBT.user[which(bias.neutBT.user$Experiment=="4a"),]
+
+#Anova for blocktype, experiment 1
+anova.bias.neutBT1<-aov(bias~blockType+Error(userid/blockType),data=bias.neutBT.user1)
+
+#Anova for blocktype, experiment 2
+anova.bias.neutBT2<-aov(bias~blockType+Error(userid/blockType),data=bias.neutBT.user2)
+
+#Anova for blocktype, experiment 3
+anova.bias.neutBT3<-aov(bias~blockType+Error(userid/blockType),data=bias.neutBT.user3)
+```
+
+#### Experiment 1 ANOVA, Mean Bias by Block Type ####
+
+```{r,echo=FALSE}
+summary(anova.bias.neutBT1)[2]
+```
+
+
+#### Exerpiment 2 ANOVA, Mean Bias by Block Type ####
+
+```{r,echo=FALSE}
+summary(anova.bias.neutBT2)[2]
+```
+
+
+#### Experiment 3 ANOVA, Mean Bias by Block Type ####
+
+```{r,echo=FALSE}
+summary(anova.bias.neutBT3)[2]
+```
+
+
+#### Experiment 1, 2 & 3: Mean Bias t-tests (difference from 0) ####
+
+```{r,echo=FALSE}
+# Experiment 1, Sequential tirals
+tt.1.seq<-t.test(bias.neutBT.user1[which(bias.neutBT.user1$blockType=="seq"),]$bias)
+
+# Experiment 1, Simultaneous tirals
+tt.1.simul<-t.test(bias.neutBT.user1[which(bias.neutBT.user1$blockType=="simul"),]$bias)
+
+# Experiment 2, Sequential tirals
+tt.2.seq<-t.test(bias.neutBT.user2[which(bias.neutBT.user2$blockType=="seq"),]$bias)
+
+# Experiment 2, Simultaneous tirals
+tt.2.simul<-t.test(bias.neutBT.user2[which(bias.neutBT.user2$blockType=="simul"),]$bias)
+
+# Experiment 3, Sequential tirals
+tt.3.seq<-t.test(bias.neutBT.user3[which(bias.neutBT.user3$blockType=="seq"),]$bias)
+
+# Experiment 3, Simultaneous tirals
+tt.3.simul<-t.test(bias.neutBT.user3[which(bias.neutBT.user3$blockType=="simul"),]$bias)
+
+#All pvalues and all t statistics
+tt.pvalues<-c(tt.1.seq$p.value,tt.1.simul$p.value,tt.2.seq$p.value,tt.2.simul$p.value,tt.3.seq$p.value,tt.3.simul$p.value)
+tt.stat<-c(tt.1.seq$statistic,tt.1.simul$statistic,tt.2.seq$statistic,tt.2.simul$statistic,tt.3.seq$statistic,tt.3.simul$statistic)
+
+p.min<-min(tt.pvalues)
+t.max<-max(abs(tt.stat))
+```
+
+No mean bias was significantly different from zero [t < `r t.max`, p > `r p.min`]
+
+
+### Circular Variance ###
+
+```{r,echo=FALSE,warning=FALSE}
+#Circular variance per cell for each subject in each experiment
+var.neutBT.user<-ddply(dneut,.(Experiment,userid,blockType),summarise,var=var.circular(circular(angdiff,type="angles",units="degrees")))
+var.neutBT.user1<-var.neutBT.user[which(var.neutBT.user$Experiment=="2a"),]
+var.neutBT.user2<-var.neutBT.user[which(var.neutBT.user$Experiment=="3a"),]
+var.neutBT.user3<-var.neutBT.user[which(var.neutBT.user$Experiment=="4a"),]
+
+#Anova for blocktype, experiment 1
+anova.var.neutBT1<-aov(var~blockType+Error(userid/blockType),data=var.neutBT.user1)
+
+#Anova for blocktype, experiment 2
+anova.var.neutBT2<-aov(var~blockType+Error(userid/blockType),data=var.neutBT.user2)
+
+#Anova for blocktype, experiment 3
+anova.var.neutBT3<-aov(var~blockType+Error(userid/blockType),data=var.neutBT.user3)
+
+#Cell means by block type for each experiment
+var.neutBT<-ddply(var.neutBT.user,.(Experiment,blockType),summarise,mean=ci(var)$mean,upper=ci(var)$upper, lower=ci(var)$lower)
+```
+
+
+#### Experiment 1 ANOVA, Circular Variance ####
+
+```{r,echo=FALSE}
+summary(anova.var.neutBT1)[2]
+etasq(anova.var.neutBT1[[3]])
+```
+
+#### Exerpiment 2 ANOVA, Circular Variance ####
+
+```{r,echo=FALSE}
+summary(anova.var.neutBT2)[2]
+etasq(anova.var.neutBT2[[3]])
+```
+
+#### Experiment 3 ANOVA, Circular Variance ####
+
+```{r,echo=FALSE}
+summary(anova.var.neutBT3)[2]
+etasq(anova.var.neutBT3[[3]])
+```
+
+#### Experiments 1, 2 & 3 Cell Means ####
+
+```{r,echo=FALSE}
+#Round values
+var.neutBT$mean<-round(var.neutBT$mean,2)
+var.neutBT$upper<-round(var.neutBT$upper,2)
+var.neutBT$lower<-round(var.neutBT$lower,2)
+
+#Rename names
+names(var.neutBT)<-c("Experiment","Block","Mean","95% CI Upper","95% CI Lower")
+
+#Rename levels
+var.neutBT$Block<-mapvalues(var.neutBT$Block,from=c("seq","simul"), to=c("Seqential","Simultaneous"))
+var.neutBT$Experiment<-mapvalues(var.neutBT$Experiment, from=c("2a","3a","4a"),to=c("Exp. 1","Exp. 2","Exp. 3 "))
+```
+```{r,echo=FALSE,results="asis"}
+#Display the table
+kable(var.neutBT,row.names=FALSE,align="c")
+```
+
+
+## Model Fits ##
+
+### Aggregate Fits ###
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+#Aggregate fits
+fit.bT.user<-ddply(dneut,.(Experiment,userid,blockType),summarise,par.val=mixedfit(angdiff))
+par.val<-as.numeric(fit.bT.user$par.val)
+param<-rep(c("mu", "kappa", "sigma","g","cor"),length(fit.bT.user$userid)/5)
+fit.bT.user<-data.frame(fit.bT.user[,c(1,2,3)],param,par.val)
+fit.bT.user1<-fit.bT.user[which(fit.bT.user$Experiment=="2a"),]
+fit.bT.user2<-fit.bT.user[which(fit.bT.user$Experiment=="3a"),]
+fit.bT.user3<-fit.bT.user[which(fit.bT.user$Experiment=="4a"),]
+```
+
+
+### Individual Fits ###
+```{r,echo=FALSE}
+#Anova for blocktype, g, experiment 1
+anova.ind.g1<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user1[which(fit.bT.user1$param=="g"),])
+
+#Anova for blocktype, g, experiment 2
+anova.ind.g2<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user2[which(fit.bT.user2$param=="g"),])
+
+#Anova for blocktype, g, experiment 3
+anova.ind.g3<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user3[which(fit.bT.user3$param=="g"),])
+
+#Anova for blocktype, sigma, experiment 1
+anova.ind.sigma1<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user1[which(fit.bT.user1$param=="sigma"),])
+
+#Anova for blocktype, sigma, experiment 2
+anova.ind.sigma2<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user2[which(fit.bT.user2$param=="sigma"),])
+
+#Anova for blocktype, sigma, experiment 3
+anova.ind.sigma3<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user3[which(fit.bT.user3$param=="sigma"),])
+
+#Anova for blocktype, mu, experiment 1
+anova.ind.mu1<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user1[which(fit.bT.user1$param=="mu"),])
+
+#Anova for blocktype, mu, experiment 2
+anova.ind.mu2<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user2[which(fit.bT.user2$param=="mu"),])
+
+#Anova for blocktype, mu, experiment 3
+anova.ind.mu3<-aov(par.val~blockType+Error(userid/blockType),data=fit.bT.user3[which(fit.bT.user3$param=="mu"),])
+```
+
+#### Experiment 1 ANOVA: g ####
+
+```{r, echo=FALSE}
+summary(anova.ind.g1)[2]
+etasq(anova.ind.g1[[3]])
+```
+
+
+#### Experiment 2 ANOVA: g ####
+```{r, echo=FALSE}
+summary(anova.ind.g2)[2]
+etasq(anova.ind.g2[[3]])
+```
+
+
+#### Experiment 3 ANOVA: g ####
+```{r, echo=FALSE}
+summary(anova.ind.g3)[2]
+```
+```{r,echo=FALSE}
+#Number of subjects showing the expected pattern
+Exp3g<-fit.bT.user3[which(fit.bT.user3$param=="g"),]
+Exp3gSubjNum<-ddply(Exp3g,.(userid),transform,greater=ifelse(par.val[blockType=="simul"]-par.val[blockType=="seq"]>0,1,0))
+
+numSubjGreater<-sum(Exp3gSubjNum$greater)/2
+```
+
+`r numSubjGreater` out of 31 subjects showed the expected patten of results: more guessing on simultaneous trials.
+
+
+#### Experiment 1 ANOVA: sigma ####
+
+```{r, echo=FALSE}
+summary(anova.ind.sigma1)[2]
+```
+
+
+#### Experiment 2 ANOVA: sigma ####
+```{r, echo=FALSE}
+summary(anova.ind.sigma2)[2]
+```
+
+
+#### Experiment 3 ANOVA: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+summary(anova.ind.sigma3)[2]
+etasq(anova.ind.sigma3[[3]])
+```
+```{r,echo=FALSE}
+#Number of subjects showing the unexpected pattern
+Exp3sigma<-fit.bT.user3[which(fit.bT.user3$param=="sigma"),]
+Exp3sigmaSubjNum<-ddply(Exp3g,.(userid),transform,greater=ifelse(par.val[blockType=="simul"]-par.val[blockType=="seq"]>0.1,1,0))
+
+numSubjGreater2<-sum(Exp3sigmaSubjNum$greater)/2
+```
+
+`r numSubjGreater2` out of 31 subjects were more precise on sequential trials.
+
+
+#### Experiment 1 ANOVA: mu ####
+
+```{r, echo=FALSE}
+summary(anova.ind.mu1)[2]
+```
+
+
+#### Experiment 2 ANOVA: mu ####
+```{r, echo=FALSE}
+summary(anova.ind.mu2)[2]
+```
+
+
+#### Experiment 3 ANOVA: mu ####
+```{r, echo=FALSE}
+summary(anova.ind.sigma3)[2]
+```
+
+
+Orientation judgments as a function of spatial cueing: Sequential Trials
+---
+```{r,echo=FALSE}
+#Data frame of just sequential trials
+dseq<-subset(d,d$blockType=="seq")
+```
+```{r,echo=FALSE}
+#Sequential Effects Analysis
+#Cell means for each user, validCue x stimResp
+var.seqVC.user.seff<-ddply(dseq,.(Experiment,userid,validCue,stimResp),summarise,var=var.circular(circular(angdiff,type="angles",units="degrees")))
+var.seqVC.user.seff1<-var.seqVC.user.seff[which(var.seqVC.user.seff$Experiment=="2a"),]
+var.seqVC.user.seff2<-var.seqVC.user.seff[which(var.seqVC.user.seff$Experiment=="3a"),]
+var.seqVC.user.seff3<-var.seqVC.user.seff[which(var.seqVC.user.seff$Experiment=="4a"),]
+
+#Circular variance, experiment 1
+anova.var.seqVC1.seff<-aov(var~validCue*stimResp+Error(userid/(validCue*stimResp)),data=var.seqVC.user.seff1)
+
+#Circular variance, experiment 2
+anova.var.seqVC2.seff<-aov(var~validCue*stimResp+Error(userid/(validCue*stimResp)),var.seqVC.user.seff2)
+
+#Circular variance, experiment 3
+anova.var.seqVC1.seff<-aov(var~validCue*stimResp+Error(userid/(validCue*stimResp)),data=var.seqVC.user.seff3)
+
+#Circular variance for each target, experiment 2
+anova.var.seqVC2.seff.1<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user.seff2[which(var.seqVC.user.seff2$stimResp==1),])
+anova.var.seqVC2.seff.2<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user.seff2[which(var.seqVC.user.seff2$stimResp==2),])
+
+#Circular variance for each target, experiment 3
+anova.var.seqVC3.seff.1<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user.seff3[which(var.seqVC.user.seff3$stimResp==1),])
+anova.var.seqVC3.seff.2<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user.seff3[which(var.seqVC.user.seff3$stimResp==2),])
+```
+
+
+The cue was only effective when the target was the first stimulus so trials on which  the target was the second stimulus were removed from the analysis.
+```{r,echo=FALSE}
+#Data from only the first stimulus as the target
+dseq1<-subset(d,d$stimResp==1)
+```
+
+
+## Descriptive Statistics ##
+
+
+### Bias ###
+```{r,echo=FALSE}
+#Mean bias in each cell for each user
+bias.seqVC.user<-ddply(dseq1,.(Experiment,userid,validCue),summarise,bias=mean(angdiff))
+bias.seqVC.user1<-bias.seqVC.user[which(bias.seqVC.user$Experiment=="2a"),]
+bias.seqVC.user2<-bias.seqVC.user[which(bias.seqVC.user$Experiment=="3a"),]
+bias.seqVC.user3<-bias.seqVC.user[which(bias.seqVC.user$Experiment=="4a"),]
+
+#Anova for mean bias by cueing condition, experiment 1
+anova.bias.seqVC1<-aov(bias~validCue+Error(userid/validCue),data=bias.seqVC.user1)
+
+#Anova for mean bias by cueing condition, experiment 2
+anova.bias.seqVC2<-aov(bias~validCue+Error(userid/validCue),data=bias.seqVC.user2)
+
+#Anova for mean bias by cueing condition, experiment 3
+anova.bias.seqVC3<-aov(bias~validCue+Error(userid/validCue),data=bias.seqVC.user3)
+```
+
+#### Experiment 1 ANOVA, Mean Bias ####
+```{r,echo=FALSE}
+summary(anova.bias.seqVC1)[2]
+etasq(anova.bias.seqVC1[[3]])
+```
+```{r,echo=FALSE}
+#Cell means for bias
+bias.seqVC1<-ddply(bias.seqVC.user1,.(validCue),summarise,mean=ci(bias)$mean,upper=ci(bias)$upper, lower=ci(bias)$lower)
+
+#Rename for table
+bias.seqVC1$validCue<-mapvalues(bias.seqVC1$validCue, from = c("neutral","TRUE"), to = c("No Cue", "Valid Cue"))
+
+#Round for table
+bias.seqVC1$mean<-round(bias.seqVC1$mean,2)
+bias.seqVC1$lower<-round(bias.seqVC1$lower,2)
+bias.seqVC1$upper<-round(bias.seqVC1$upper,2)
+
+#Rename variables for table
+names(bias.seqVC1)<-c("Cueing","Mean","95% CI Upper","95% CI Lower")
+
+#Participants with large biases on cued trials
+bias.seqVC.user1.table<-bias.seqVC.user1[which(bias.seqVC.user1$userid==6 | bias.seqVC.user1$userid==15 | bias.seqVC.user1$userid==18 | bias.seqVC.user1$userid==27),]
+bias.seqVC.user1.table<-subset(bias.seqVC.user1.table,bias.seqVC.user1.table$validCue=="TRUE")
+bias.seqVC.user1.table<-bias.seqVC.user1.table[,2:ncol(bias.seqVC.user1.table)]
+
+#Round the bias
+bias.seqVC.user1.table$bias<-round(bias.seqVC.user1.table$bias,2)
+
+#Remap cueing
+bias.seqVC.user1.table$validCue<-mapvalues(bias.seqVC.user1.table$validCue,from="TRUE", to="Cued")
+
+#Rename variables
+names(bias.seqVC.user1.table)<-c("Subject","Cueing","Mean Bias")
+```
+
+```{r,echo=FALSE,results="asis"}
+kable(bias.seqVC1,row.names=FALSE,align="c")
+```
+
+
+```{r,echo=FALSE,results="asis"}
+kable(bias.seqVC.user1.table,row.names=FALSE,align="c")
+```
+
+
+#### Exerpiment 2 ANOVA, Mean Bias ####
+```{r,echo=FALSE}
+summary(anova.bias.seqVC2)[2]
+```
+
+
+#### Experiment 3 ANOVA, Mean Bias ####
+```{r,echo=FALSE}
+summary(anova.bias.seqVC3)[2]
+```
+
+
+### Circular Variance ###
+
+```{r,echo=FALSE}
+#Cell means for circular variance
+var.seqVC.user<-ddply(dseq1,.(Experiment,userid,validCue),summarise,var=var.circular(circular(angdiff,type="angles",units="degrees")))
+var.seqVC.user1<-var.seqVC.user[which(var.seqVC.user$Experiment=="2a"),]
+var.seqVC.user2<-var.seqVC.user[which(var.seqVC.user$Experiment=="3a"),]
+var.seqVC.user3<-var.seqVC.user[which(var.seqVC.user$Experiment=="4a"),]
+
+#ANOVAs
+anova.var.seqVC1<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user1)
+anova.var.seqVC2<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user2)
+anova.var.seqVC3<-aov(var~validCue+Error(userid/validCue),data=var.seqVC.user3)
+```
+
+
+#### Experiment 1 ANOVA, Circular Variance ####
+```{r,echo=FALSE}
+summary(anova.var.seqVC1)[2]
+etasq(anova.var.seqVC1[[3]])
+```
+
+
+#### Exerpiment 2 ANOVA and t-tests, Circular Variance ####
+```{r,echo=FALSE}
+summary(anova.var.seqVC2)[2]
+etasq(anova.var.seqVC2[[3]])
+
+invalid1<-var.seqVC.user2[which(var.seqVC.user2$validCue=="FALSE"),]$var
+nocue1<-var.seqVC.user2[which(var.seqVC.user2$validCue=="neutral"),]$var
+valid1<-var.seqVC.user2[which(var.seqVC.user2$validCue=="TRUE"),]$var
+```
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. No Cue Cohen's D
+t.test(invalid1,nocue1,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid1,nocue1)`
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. Valid Cohen's D
+t.test(invalid1,valid1,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid1,valid1)`
+
+##### No Cue vs. Valid #####
+```{r,echo=FALSE}
+#No cue vs. Valid Cohen's D
+t.test(nocue1,valid1,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(nocue1,valid1)`
+
+
+#### Experiment 3 ANOVA and t-tests, Circular Variance ####
+```{r,echo=FALSE}
+summary(anova.var.seqVC3)[2]
+etasq(anova.var.seqVC3[[3]])
+
+
+invalid2<-var.seqVC.user3[which(var.seqVC.user3$validCue=="FALSE"),]$var
+nocue2<-var.seqVC.user3[which(var.seqVC.user3$validCue=="neutral"),]$var
+valid2<-var.seqVC.user3[which(var.seqVC.user3$validCue=="TRUE"),]$var
+```
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. No Cue Cohen's D
+t.test(invalid2,nocue2,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid2,nocue2)`
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. Valid Cohen's D
+t.test(invalid2,valid2,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid2,valid2)`
+
+##### No Cue vs. Valid #####
+```{r,echo=FALSE}
+#No cue vs. Valid Cohen's D
+t.test(nocue2,valid2,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(nocue2,valid2)`
+
+
+```{r,echo=FALSE}
+var.seqVC<-ddply(var.seqVC.user,.(Experiment,validCue),summarise,mean=ci(var)$mean,upper=ci(var)$upper, lower=ci(var)$lower)
+
+#Round values
+var.seqVC$mean<-round(var.seqVC$mean,2)
+var.seqVC$upper<-round(var.seqVC$upper,2)
+var.seqVC$lower<-round(var.seqVC$lower,2)
+
+#Relabel levels for table
+var.seqVC$Experiment<-mapvalues(var.seqVC$Experiment, from = c("2a","3a","4a"), to = c("Exp. 1", "Exp. 2", "Exp. 3"))
+var.seqVC$validCue<-mapvalues(var.seqVC$validCue, from = c("neutral","TRUE","FALSE"), to = c("No Cue", "Valid Cue","Invalid Cue"))
+
+#Rename columns
+names(var.seqVC)<-c("Experiment","Cueing","Mean","95% CI Upper","95% CI Lower")
+```
+```{r,echo=FALSE,results="asis"}
+kable(var.seqVC,row.names=FALSE,align="c")
+```
+
+### Mixed ANOVA: Experiment (Btwn Subjs) x validCue (Wthn Subjs) ###
+```{r, echo=FALSE,warning=FALSE}
+#BS: Experiment; WS: validCue
+E23.vC<-var.seqVC.user[which(var.seqVC.user$Experiment!="2a"),]
+anova.E23.vC<-aov(var~as.factor(Experiment)*validCue+Error(userid/validCue),E23.vC)
+summary(anova.E23.vC)[2]
+```
+
+
+## Model Fits ##
+
+### Aggregate Fits ###
+```{r,echo=FALSE,warning=FALSE}
+#Aggregate fits
+fit.seqVC.user<-ddply(dseq1,.(Experiment,userid,validCue),summarise,par.val=mixedfit(angdiff))
+par.val<-as.numeric(fit.seqVC.user$par.val)
+param<-rep(c("mu", "kappa", "sigma","g","cor"),length(fit.seqVC.user$userid)/5)
+fit.seqVC.user<-data.frame(fit.seqVC.user[,c(1,2,3)],param,par.val)
+```
+
+#### Experiment 1 ANOVA: g ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.g1<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="2a" & fit.seqVC.user$param=="g"),])
+summary(anova.ind.seqVC.g1)[2]
+```
+
+
+#### Experiment 2 ANOVA: g ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.g2<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="3a" & fit.seqVC.user$param=="g"),])
+summary(anova.ind.seqVC.g2)[2]
+```
+
+
+#### Experiment 3 ANOVA: g ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.g3<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="4a" & fit.seqVC.user$param=="g"),])
+summary(anova.ind.seqVC.g3)[2]
+```
+
+
+#### Experiment 1 ANOVA: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.sigma1<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="2a" & fit.seqVC.user$param=="sigma"),])
+summary(anova.ind.seqVC.sigma1)[2]
+```
+
+
+#### Experiment 2 ANOVA: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.sigma2<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="3a" & fit.seqVC.user$param=="sigma"),])
+summary(anova.ind.seqVC.sigma2)[2]
+```
+
+
+#### Experiment 3 ANOVA: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.sigma3<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="4a" & fit.seqVC.user$param=="sigma"),])
+summary(anova.ind.seqVC.sigma3)[2]
+```
+
+
+#### Experiment 1 ANOVA: mu ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.mu1<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="2a" & fit.seqVC.user$param=="mu"),])
+summary(anova.ind.seqVC.mu1)[2]
+```
+
+
+#### Experiment 2 ANOVA: mu ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.seqVC.mu2<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="3a" & fit.seqVC.user$param=="mu"),])
+summary(anova.ind.seqVC.mu2)[2]
+```
+
+
+#### Experiment 3 ANOVA: mu ####
+```{r, echo=FALSE,warning=FALSE}
+#17 and 18 have large biases
+anova.ind.seqVC.mu3<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.seqVC.user[which(fit.seqVC.user$Experiment=="4a" & fit.seqVC.user$param=="mu"),])
+summary(anova.ind.seqVC.mu3)[2]
+etasq(anova.ind.seqVC.mu3[[3]])
+
+invalid3<-fit.seqVC.user[which(fit.seqVC.user$Experiment=="4a" & fit.seqVC.user$param=="mu" & fit.seqVC.user$validCue=="FALSE"),]$par.val
+nocue3<-fit.seqVC.user[which(fit.seqVC.user$Experiment=="4a" & fit.seqVC.user$param=="mu"& fit.seqVC.user$validCue=="neutral"),]$par.val
+valid3<-fit.seqVC.user[which(fit.seqVC.user$Experiment=="4a" & fit.seqVC.user$param=="mu"& fit.seqVC.user$validCue=="TRUE"),]$par.val
+```
+
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. No Cue Cohen's D
+t.test(invalid3,nocue3,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid3,nocue3)`
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. Valid Cohen's D
+t.test(invalid3,valid3,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid3,valid3)`
+
+##### No Cue vs. Valid #####
+```{r,echo=FALSE}
+#No cue vs. Valid Cohen's D
+t.test(nocue3,valid3,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(nocue3,valid3)`
+
+
+
+
+Orientation judgments as a function of spatial cueing: Simultaneous Trials
+--
+
+```{r,echo=FALSE,warning=FALSE}
+#Data frame of just simuluential trials
+dsimul<-subset(d,d$blockType=="simul")
+```
+
+## Descriptive Statistics ##
+
+
+### Bias ###
+
+```{r,echo=FALSE,warning=FALSE}
+bias.simulVC.user<-ddply(dsimul,.(Experiment,userid,validCue),summarise,bias=mean(angdiff))
+
+anova.bias.simulVC1<-aov(bias~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=bias.simulVC.user[which(bias.simulVC.user$Experiment=="2a"),])
+anova.bias.simulVC2<-aov(bias~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=bias.simulVC.user[which(bias.simulVC.user$Experiment=="3a"),])
+anova.bias.simulVC3<-aov(bias~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=bias.simulVC.user[which(bias.simulVC.user$Experiment=="4a"),])
+```
+
+
+### Experiment 1 ANOVA, Mean Bias ###
+```{r,echo=FALSE,warning=FALSE}
+summary(anova.bias.simulVC1)[2]
+```
+
+
+### Exerpiment 2 ANOVA, Mean Bias ###
+```{r,echo=FALSE,warning=FALSE}
+summary(anova.bias.simulVC2)[2]
+```
+
+
+### Experiment 3 ANOVA , Mean Bias ###
+```{r,echo=FALSE,warning=FALSE}
+summary(anova.bias.simulVC3)[2]
+```
+
+
+### Circular Variance ###
+
+```{r,echo=FALSE,warning=FALSE}
+#Variance
+var.simulVC.user<-ddply(dsimul,.(Experiment,userid,validCue),summarise,var=var.circular(circular(angdiff,type="angles",units="degrees")))
+```
+
+### Experiment 1 ANOVA, Circular Variance ###
+```{r,echo=FALSE,warning=FALSE}
+anova.var.simulVC1<-aov(var~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=var.simulVC.user[which(var.simulVC.user$Experiment=="2a"),])
+summary(anova.var.simulVC1)[2]
+```
+
+### Exerpiment 2 ANOVA and t-tests, Circular Variance ###
+```{r,echo=FALSE,warning=FALSE}
+anova.var.simulVC2<-aov(var~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=var.simulVC.user[which(var.simulVC.user$Experiment=="3a"),])
+summary(anova.var.simulVC2)[2]
+etasq(anova.var.simulVC2[[3]])
+
+invalid1<-var.simulVC.user[which(var.simulVC.user$Experiment=="3a" & var.simulVC.user$validCue=="FALSE"),]$var
+nocue1<-var.simulVC.user[which(var.simulVC.user$Experiment=="3a" & var.simulVC.user$validCue=="neutral"),]$var
+valid1<-var.simulVC.user[which(var.simulVC.user$Experiment=="3a" & var.simulVC.user$validCue=="TRUE"),]$var
+
+```
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. No Cue Cohen's D
+t.test(invalid1,nocue1,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid1,nocue1)`
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. Valid Cohen's D
+t.test(invalid1,valid1,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid1,valid1)`
+
+##### No Cue vs. Valid #####
+```{r,echo=FALSE}
+#No cue vs. Valid Cohen's D
+t.test(nocue1,valid1,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(nocue1,valid1)`
+
+
+### Experiment 3 ANOVA and t-tests, Circular Variance ###
+```{r,echo=FALSE,warning=FALSE}
+anova.var.simulVC3<-aov(var~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=var.simulVC.user[which(var.simulVC.user$Experiment=="4a"),])
+summary(anova.var.simulVC3)[2]
+etasq(anova.var.simulVC3[[3]])
+
+invalid2<-var.simulVC.user[which(var.simulVC.user$Experiment=="4a" & var.simulVC.user$validCue=="FALSE"),]$var
+nocue2<-var.simulVC.user[which(var.simulVC.user$Experiment=="4a" & var.simulVC.user$validCue=="neutral"),]$var
+valid2<-var.simulVC.user[which(var.simulVC.user$Experiment=="4a" & var.simulVC.user$validCue=="TRUE"),]$var
+
+```
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. No Cue Cohen's D
+t.test(invalid2,nocue2,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid2,nocue2)`
+
+##### Invalid vs. No Cue #####
+```{r,echo=FALSE}
+#Invalid vs. Valid Cohen's D
+t.test(invalid2,valid2,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(invalid2,valid2)`
+
+##### No Cue vs. Valid #####
+```{r,echo=FALSE}
+#No cue vs. Valid Cohen's D
+t.test(nocue2,valid2,p.adj="bonferroni",paired=T)
+```
+
+Cohen's d: `r cohens_d(nocue2,valid2)`
+
+
+### Mixed ANOVA: Experiment (Btwn Subjs) x validCue (Wthn Subjs) ###
+```{r, echo=FALSE,warning=FALSE}
+#BS: Experiment; WS: validCue
+E23.vC.simul<-var.simulVC.user[which(var.simulVC.user$Experiment!="2a"),]
+anova.E23.vC.simul<-aov(var~as.factor(Experiment)*as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),E23.vC.simul)
+summary(anova.E23.vC.simul)[2]
+```
+
+
+## Model Fits ##
+
+```{r,echo=FALSE,warning=FALSE}
+#Aggregate and individual fits
+fit.simulVC.user<-ddply(dsimul,.(Experiment,userid,validCue),summarise,par.val=mixedfit(angdiff))
+par.val<-as.numeric(fit.simulVC.user$par.val)
+param<-rep(c("mu", "kappa", "sigma","g","cor"),length(fit.simulVC.user$userid)/5)
+fit.simulVC.user<-data.frame(fit.simulVC.user[,c(1,2,3)],param,par.val)
+fit.simulVC.mean<-ddply(fit.simulVC.user,.(Experiment,validCue,param),summarise,
+                   mean=ci(par.val)$mean,lower=ci(par.val)$lower,upper=ci(par.val)$upper)
+fit.simulVC.mean$validCue<-factor(fit.simulVC.mean$validCue, c("FALSE", "neutral", "TRUE"))
+#Relabel levels for plotting
+fit.simulVC.mean$validCue<-mapvalues(fit.simulVC.mean$validCue, from = c("FALSE","neutral","TRUE"), to = c("Invalid\nCue", "No\nCue", "Valid\nCue"))
+fit.simulVC.mean$Experiment<-mapvalues(fit.simulVC.mean$Experiment, from = c("2a","3a","4a"), to = c("Experiment 1", "Experiment 2","Experiment 3"))
+```
+
+### Indivdual fits ###
+``` {r, fig.width=7, fig.height=5,echo=FALSE,warning=FALSE}
+#Create plot of mean individual g for experiment and block type
+ggplot(fit.simulVC.mean[which(fit.simulVC.mean$param=="g"),],aes(validCue))+geom_point(aes(y=mean,colour=validCue),stat="identity",size=4)+facet_grid(.~Experiment,scales="free_x")+geom_errorbar(aes(ymax=upper,ymin=lower),width=0.25)+theme_bw()+labs(x="Cueing",y="g")+scale_colour_manual(name="Cueing",values=c("grey65","black","grey35"))+theme(strip.text.x = element_text(size = 14),axis.text.x = element_text(size = 14),axis.text.y = element_text(size = 14),legend.position="none")+scale_y_continuous(limits=c(0,0.55))
+```
+#### Experiment 1 ANOVA: g ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.g1<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="2a" & fit.simulVC.user$param=="g"),])
+summary(anova.ind.simulVC.g1)[2]
+```
+#### Experiment 2 ANOVA and t-tests: g ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.g2<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="g"),])
+summary(anova.ind.simulVC.g2)[2]
+```
+#### Experiment 3 ANOVA: g ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.g3<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="g"),])
+summary(anova.ind.simulVC.g3)[2]
+etasq(anova.ind.simulVC.g3[[3]])
+
+invalid1<-fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="g" & fit.simulVC.user$validCue=="FALSE"),]$par.val
+nocue1<-fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="g" & fit.simulVC.user$validCue=="neutral"),]$par.val
+valid1<-fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="g" & fit.simulVC.user$validCue=="TRUE"),]$par.val
+```
+```{r,echo=FALSE}
+#Valid vs. Invaild Cohen's D
+t.test(invalid1,nocue1,p.adj="bonferroni",paired=T)
+cohens_d(valid1,invalid1)
+```
+```{r,echo=FALSE}
+t.test(invalid1,valid1,p.adj="bonferroni",paired=T)
+cohens_d(valid1,invalid1)
+```
+```{r,echo=FALSE}
+#Valid vs. No Cue Cohen's D
+t.test(valid1,nocue1,p.adj="bonferroni",paired=T)
+cohens_d(valid1,nocue1)
+```
+``` {r, fig.width=7, fig.height=5,echo=FALSE,warning=FALSE}
+#Create plot of mean individual sigma for experiment and block type
+ggplot(fit.simulVC.mean[which(fit.simulVC.mean$param=="sigma"),],aes(validCue))+geom_point(aes(y=mean*180/pi,colour=validCue),stat="identity",size=4)+facet_grid(.~Experiment,scales="free_x")+geom_errorbar(aes(ymax=upper*180/pi,ymin=lower*180/pi),width=0.25)+theme_bw()+labs(x="Cueing",y=expression(sigma * " (" * degree * ")"))+scale_colour_manual(name="Cueing",values=c("grey65","black","grey35"))+theme(strip.text.x = element_text(size = 14),axis.text.x = element_text(size = 14),axis.text.y = element_text(size = 14),legend.position="none")+scale_y_continuous(limits=c(15,55))
+```
+#### Experiment 1 ANOVA: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.sigma1<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="2a" & fit.simulVC.user$param=="sigma"),])
+summary(anova.ind.simulVC.sigma1)[2]
+etasq(anova.ind.simulVC.sigma1[[3]])
+```
+#### Experiment 2 ANOVA and t-tests: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.sigma2<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="sigma"),])
+summary(anova.ind.simulVC.sigma2)[2]
+etasq(anova.ind.simulVC.sigma2[[3]])
+
+invalid2<-fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="sigma" & fit.simulVC.user$validCue=="FALSE"),]$par.val
+valid2<-fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="sigma" & fit.simulVC.user$validCue=="TRUE"),]$par.val
+nocue2<-fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="sigma" & fit.simulVC.user$validCue=="neutral"),]$par.val
+```
+```{r,echo=FALSE}
+t.test(invalid2,nocue2,p.adj="bonferroni",paired=T)
+cohens_d(invalid2,nocue2)
+
+t.test(invalid2,valid2,p.adj="bonferroni",paired=T)
+cohens_d(invalid2,valid2)
+
+t.test(nocue2,valid2,p.adj="bonferroni",paired=T)
+cohens_d(nocue2,valid2)
+```
+#### Experiment 3 ANOVA: sigma ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.sigma3<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="sigma"),])
+summary(anova.ind.simulVC.sigma3)[2]
+```
+``` {r, fig.width=7, fig.height=5,echo=FALSE,warning=FALSE}
+#Create plot of mean individual mu for experiment and block type
+ggplot(fit.simulVC.mean[which(fit.simulVC.mean$param=="mu"),],aes(validCue))+geom_point(aes(y=mean*180/pi,colour=validCue),stat="identity",size=4)+facet_grid(.~Experiment,scales="free_x")+geom_errorbar(aes(ymax=upper*180/pi,ymin=lower*180/pi),width=0.25)+theme_bw()+labs(x="Cueing",y=expression(mu * " (" * degree * ")"))+scale_colour_manual(name="Cueing",values=c("grey65","black","grey35"))+theme(strip.text.x = element_text(size = 14),axis.text.x = element_text(size = 14),axis.text.y = element_text(size = 14),legend.position="none")
+```
+#### Experiment 1 ANOVA: mu ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.mu1<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="2a" & fit.simulVC.user$param=="mu"),])
+summary(anova.ind.simulVC.mu1)[2]
+```
+#### Experiment 2 ANOVA: mu ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.mu2<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="mu"),])
+summary(anova.ind.simulVC.mu2)[2]
+ttest.ind.simulVC.mu2<-with(fit.simulVC.user[which(fit.simulVC.user$Experiment=="3a" & fit.simulVC.user$param=="mu"),],pairwise.t.test(par.val,as.factor(validCue),p.adj="bonferroni",paired=T))
+ttest.ind.simulVC.mu2[3]
+```
+#### Experiment 3 ANOVA: mu ####
+```{r, echo=FALSE,warning=FALSE}
+anova.ind.simulVC.mu3<-aov(par.val~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="mu"),])
+summary(anova.ind.simulVC.mu3)[2]
+ttest.ind.simulVC.mu3<-with(fit.simulVC.user[which(fit.simulVC.user$Experiment=="4a" & fit.simulVC.user$param=="mu"),],pairwise.t.test(par.val,as.factor(validCue),p.adj="bonferroni",paired=T))
+ttest.ind.simulVC.mu3[3]
+```
+
+### Aggregate fits ###
+#### Experiment 1 ####
+```{r,fig.width=6,fig.height=4,echo=FALSE,warning=FALSE}
+fit.simulVC1<-plotVC(dsimul[which(dsimul$Experiment=="2a"),])
+fit.simulVC1[[1]]
+```
+K-S test p-value:
+```{r,echo=FALSE,warning=FALSE}
+fit.simulVC1[[2]]
+```
+
+#### Experiment 2 ####
+```{r,fig.width=6,fig.height=4,echo=FALSE,warning=FALSE}
+fit.simulVC2<-plotVC(dsimul[which(dsimul$Experiment=="3a"),])
+fit.simulVC2[[1]]
+```
+K-S test p-value:
+```{r,echo=FALSE,warning=FALSE}
+fit.simulVC2[[2]]
+```
+
+#### Experiment 3 ####
+```{r,fig.width=6,fig.height=4,echo=FALSE,warning=FALSE}
+fit.simulVC3<-plotVC(dsimul[which(dsimul$Experiment=="4a"),])
+fit.simulVC3[[1]]
+```
+K-S test p-value:
+```{r,echo=FALSE,warning=FALSE}
+fit.simulVC3[[2]]
+```
+
+Block Analysis
+===
+
+```{r,echo=FALSE}
+#Simultaneous Trials
+dsimul34<-subset(dsimul,dsimul$blocknum<5)
+dsimul56<-subset(dsimul,dsimul$blocknum>4)
+
+dsimul1<-subset(dsimul34,dsimul34$trialnum<36)
+dsimul2<-subset(dsimul56,dsimul56$trialnum>35)
+
+dsimul.block<-rbind(dsimul1,dsimul2)
+
+var.block.simul<-ddply(dsimul.block,.(Experiment,userid,blocknum,validCue),summarise,var=var.circular(circular(angdiff,type="angles",units="degrees")))
+
+var.block.simul1<-subset(var.block.simul,var.block.simul$Experiment=="2a")
+var.block.simul2<-subset(var.block.simul,var.block.simul$Experiment=="3a")
+var.block.simul3<-subset(var.block.simul,var.block.simul$Experiment=="4a")
+
+#E1 diffs
+diff1<-ddply(var.block.simul1,.(userid,blocknum),transform,cueEff=var[validCue=="neutral"]-var[validCue=="TRUE"])
+diff1<-subset(diff1,diff1$validCue=="TRUE")
+diff1<-diff1[,c(1:3,6)]
+diff1$blocknum<-ifelse(diff1$blocknum==3,1,
+                       ifelse(diff1$blocknum==4,1,
+                              ifelse(diff1$blocknum==5,2,
+                                     ifelse(diff1$blocknum==6,2,0))))
+
+anova.var.block.simul1<-aov(cueEff~as.factor(blocknum)+Error(as.factor(userid)/as.factor(blocknum)),diff1)
+summary(anova.var.block.simul1)
+
+#E2 diffs
+var.block.simul2<-subset(var.block.simul2,var.block.simul2$userid!=7)
+var.block.simul2<-subset(var.block.simul2,var.block.simul2$validCue!="neutral")
+diff2<-ddply(var.block.simul2,.(userid,blocknum),transform,cueEff=var[validCue=="FALSE"]-var[validCue=="TRUE"])
+diff2<-subset(diff2,diff2$validCue=="TRUE")
+diff2<-diff2[,c(1:3,6)]
+diff2$blocknum<-ifelse(diff2$blocknum==3,1,
+                       ifelse(diff2$blocknum==4,1,
+                              ifelse(diff2$blocknum==5,2,
+                                     ifelse(diff2$blocknum==6,2,0))))
+
+anova.var.block.simul2<-aov(cueEff~as.factor(blocknum)+Error(as.factor(userid)/as.factor(blocknum)),diff2)
+summary(anova.var.block.simul2)[[2]]
+etasq(anova.var.block.simul2[[3]])
+
+ddply(diff2,.(blocknum),summarise,meanCueEff=mean(cueEff))
+
+#E3 diffs
+var.block.simul3<-subset(var.block.simul3,var.block.simul3$validCue!="neutral")
+diff3<-ddply(var.block.simul3,.(userid,blocknum),transform,cueEff=var[validCue=="FALSE"]-var[validCue=="TRUE"])
+diff3<-subset(diff3,diff3$validCue=="TRUE")
+diff3<-diff3[,c(1:3,6)]
+diff3$blocknum<-ifelse(diff3$blocknum==3,1,
+                       ifelse(diff3$blocknum==4,1,
+                              ifelse(diff3$blocknum==5,2,
+                                     ifelse(diff3$blocknum==6,2,0))))
+
+anova.var.block.simul3<-aov(cueEff~as.factor(blocknum)+Error(as.factor(userid)/as.factor(blocknum)),diff3)
+summary(anova.var.block.simul3)
+```
+
+
+Control Bias test
+===
+
+```{r,echo=FALSE}
+#Neutral Trials
+orientBiasNeut<-ddply(dneut,.(Experiment,userid,blockType,orient),summarise,meanErr=mean(angdiff))
+
+#E1
+m1<-lmer(data=orientBiasNeut[which(orientBiasNeut$Experiment=="2a"),],meanErr~as.factor(blockType)*as.factor(orient)+(1|userid))
+anova(m1)
+
+#E2
+m2<-lmer(data=orientBiasNeut[which(orientBiasNeut$Experiment=="3a"),],meanErr~as.factor(blockType)*as.factor(orient)+(1|userid))
+anova(m2)
+
+#E3
+m3<-lmer(data=orientBiasNeut[which(orientBiasNeut$Experiment=="4a"),],meanErr~as.factor(blockType)*as.factor(orient)+(1|userid))
+anova(m3)
+summary(m3)
+
+neutNoBias<-subset(dneut,dneut$orient!=142 & dneut$orient!=156 & dneut$orient!=170)
+neutNoBias3<-subset(neutNoBias,neutNoBias$Experiment=="4a")
+a<-ddply(neutNoBias3,.(userid,blockType),summarise,g=mixedfit(angdiff)$g,sigma=mixedfit(angdiff)$sigma)
+
+summary(aov(g~as.factor(blockType)+Error(as.factor(userid)/as.factor(blockType)),data=a))
+summary(aov(sigma~as.factor(blockType)+Error(as.factor(userid)/as.factor(blockType)),data=a))
+
+#Sequential Trials
+orientBiasSeq<-ddply(dseq1,.(Experiment,userid,validCue,orient),summarise,meanErr=mean(angdiff))
+
+#E1
+m1<-lmer(data=orientBiasSeq[which(orientBiasSeq$Experiment=="2a"),],meanErr~as.factor(validCue)*as.factor(orient)+(1|userid))
+anova(m1)
+
+#E2
+m2<-lmer(data=orientBiasSeq[which(orientBiasSeq$Experiment=="3a"),],meanErr~as.factor(validCue)*as.factor(orient)+(1|userid))
+anova(m2)
+
+#E3
+m3<-lmer(data=orientBiasSeq[which(orientBiasSeq$Experiment=="4a"),],meanErr~as.factor(validCue)*as.factor(orient)+(1|userid))
+anova(m3)
+
+#Simultaneous Trials
+orientBiasSimul<-ddply(dsimul,.(Experiment,userid,validCue,orient),summarise,meanErr=mean(angdiff))
+
+#E1
+m1<-lmer(data=orientBiasSimul[which(orientBiasSimul$Experiment=="2a"),],meanErr~as.factor(validCue)*as.factor(orient)+(1|userid))
+anova(m1)
+
+#E2
+m2<-lmer(data=orientBiasSimul[which(orientBiasSimul$Experiment=="3a"),],meanErr~as.factor(validCue)*as.factor(orient)+(1|userid))
+anova(m2)
+summary(m2)
+
+simulNoBias<-subset(dsimul,dsimul$orient!=128)
+simulNoBias2<-subset(simulNoBias,simulNoBias$Experiment=="3a")
+b<-ddply(simulNoBias2,.(userid,validCue),summarise,g=mixedfit(angdiff)$g,sigma=mixedfit(angdiff)$sigma)
+
+summary(aov(g~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=b))
+summary(aov(sigma~as.factor(validCue)+Error(as.factor(userid)/as.factor(validCue)),data=b))
+
+
+#E3
+m3<-lmer(data=orientBiasSimul[which(orientBiasSimul$Experiment=="4a"),],meanErr~as.factor(validCue)*as.factor(orient)+(1|userid))
+anova(m3)
+
+```
+
+Seq. vs. Simul.
+===
+
+```{r,echo=FALSE}
+seqSimul<-ddply(d,.(Experiment,userid,blockType,validCue),summarise,var=var.circular(circular(angdiff,type="angles",units="degrees")))
+
+summary(aov(var~as.factor(blockType)*as.factor(validCue)+Error(as.factor(userid)/(as.factor(blockType)*as.factor(validCue))),data=seqSimul[which(seqSimul$Experiment=="2a"),]))
+
+summary(aov(var~as.factor(blockType)*as.factor(validCue)+Error(as.factor(userid)/(as.factor(blockType)*as.factor(validCue))),data=seqSimul[which(seqSimul$Experiment=="3a"),]))[[4]]
+etasq(aov(var~as.factor(blockType)*as.factor(validCue)+Error(as.factor(userid)/(as.factor(blockType)*as.factor(validCue))),data=seqSimul[which(seqSimul$Experiment=="3a"),])[[5]])
+ddply(seqSimul[which(seqSimul$Experiment=="3a"),],.(blockType,validCue),summarise,meanVar=mean(var))
+
+summary(aov(var~as.factor(blockType)*as.factor(validCue)+Error(as.factor(userid)/(as.factor(blockType)*as.factor(validCue))),data=seqSimul[which(seqSimul$Experiment=="4a"),]))[[4]]
+etasq(aov(var~as.factor(blockType)*as.factor(validCue)+Error(as.factor(userid)/(as.factor(blockType)*as.factor(validCue))),data=seqSimul[which(seqSimul$Experiment=="4a"),])[[5]])
+
+ddply(seqSimul[which(seqSimul$Experiment=="4a"),],.(blockType,validCue),summarise,meanVar=mean(var))
+```
